@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="free BigBlueButton dashboard for multiple servers">
+    <meta name="author" content="Francis Gonzales, Alexander Hu">
+
+    <title>BBB Dashboard</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="node_modules/chart.js/dist/Chart.min.css" rel="stylesheet">
+    <script  type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script  type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script  type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script  type="text/javascript" src="node_modules/chart.js/dist/Chart.min.js"></script>
+    <script  type="text/javascript" src="node_modules/chart.js/dist/Chart.bundle.min.js"></script>
+    <meta name="theme-color" content="#563d7c">
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="node_modules/bootstrap/dist/css/pricing.css" rel="stylesheet">
+</head>
+<body>
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+    <h5 class="my-0 mr-md-auto font-weight-normal">{{ settings.company_name }}</h5>
+    <!--<nav class="my-2 my-md-0 mr-md-3">
+        <a class="p-2 text-dark" href="#">Features</a>
+        <a class="p-2 text-dark" href="#">Enterprise</a>
+        <a class="p-2 text-dark" href="#">Support</a>
+        <a class="p-2 text-dark" href="#">Pricing</a>
+    </nav>-->
+    <div class="col-md-2">
+      <form action="/">
+        <select name="lang" class="form-control" id="select_language">
+            <option {{ session.lang == 'EN' ? 'selected' : '' }} value="EN">{{ 'English'|translate }} - EN</option>
+            <option {{ session.lang == 'DE' ? 'selected' : '' }} value="DE">{{ 'German'|translate }} - DE</option>
+            <option {{ session.lang == 'DA' ? 'selected' : '' }} value="DA">{{ 'Danish'|translate }} - DA</option>
+            <option {{ session.lang == 'ES' ? 'selected' : '' }} value="ES">{{ 'Spanish'|translate }} - ES</option>
+            <option {{ session.lang == 'FR' ? 'selected' : '' }} value="FR">{{ 'French'|translate }} - FR</option>
+            <option {{ session.lang == 'IT' ? 'selected' : '' }} value="IT">{{ 'Italian'|translate }} - IT</option>
+            <option {{ session.lang == 'NL' ? 'selected' : '' }} value="NL">{{ 'Dutch'|translate }} - NL</option>
+            <option {{ session.lang == 'PL' ? 'selected' : '' }} value="PL">{{ 'Polish'|translate }} - PL</option>
+            <option {{ session.lang == 'PT' ? 'selected' : '' }} value="PT">{{ 'Portuguese'|translate }} - PT</option>
+            <option {{ session.lang == 'SV' ? 'selected' : '' }} value="SV">{{ 'Swedish'|translate }} - SV</option>
+        </select>
+      </form>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url }}
+">{{ 'Refresh Now'|translate }}</a>
+</div>
+<div class="container">
+    {% if total_active_meetings  > 0  %}
+        <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+            <table class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ 'Total Active Meetings'|translate }}</th>
+                        <th scope="col">{{ 'Total Attendees'|translate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>{{ total_active_meetings }}</td>
+                    <td>{{ total_meeting_attendances }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th scope="col">{{ 'Server'|translate }} </th>
+                    <th scope="col">{{ 'Active Meetings'|translate }}</th>
+                    <th scope="col">{{ 'Active Attendees'|translate }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for server in servers|keys %}
+                    <tr>
+                        <td>{{ server }}</td>
+                        <td>{{ servers[server].total_meetings }}</td>
+                        <td>{{ servers[server].total_meeting_attendances }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pricing-header mx-auto text-center">
+            <p class="lead">
+                {{ "We'll be refreshing this site every 5 minutes"|translate }} ....
+            </p>
+        </div>
+
+        <div class="card text-center">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                    {% set i = 0 %}
+                    {% for server in servers|keys %}
+                        <li class="nav-item">
+                            <a class="nav-link {{ i == 0 ? 'active' : '' }}" id="nav-tab-{{ i }}" data-toggle="tab" href="#nav-{{ i }}" role="tab" aria-controls="nav-{{ i }}" aria-selected="true">
+                                {{ server }}
+                            </a>
+                        </li>
+                    {% set i = i + 1 %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="nav-tabContent">
+                {% set i = 0 %}
+                {% for server in servers|keys %}
+                    <div class="tab-pane fade {{ i == 0 ? 'show active' : '' }}" id="nav-{{ i }}" role="tabpanel" aria-labelledby="nav-{{ i }}">
+
+                        <canvas id="chart-area-{{ i }}" ></canvas>
+                        <div class="chartjs-tooltip" id="chartjs-tooltip-{{ i }}">
+                            <table></table>
+                        </div>
+                    </div>
+                    {% set i = i + 1 %}
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+            <h1 class="display-4">{{ 'There is not any active meeting'|translate }}</h1>
+            <p class="lead">
+                {{ "We'll be refreshing this site every 5 minutes"|translate }} ....
+            </p>
+        </div>
+    {% endif %}
+    <footer class="pt-4 my-md-5 pt-md-5 border-top">
+        <div class="row">
+            <div class="col-12 col-md-3">
+                <img class="mb-2" src="../brand/osc.png" alt="" width="200" >
+                <small class="d-block mb-3 text-muted">&copy; {{ "now"|date('Y') }}</small>
+            </div>
+            <div class="col-6 col-md">
+                <h5>{{ 'Additional Tools'|translate }}</h5>
+                <ul class="list-unstyled text-small">
+                    <li><a class="text-muted" href="/recordings">{{ 'Recordings'|translate }}</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    $('#select_language').on('change', function () {
+        let form = $(this).parent();
+        form.submit();
+    });
+</script>
+{% if total_active_meetings  > 0  %}
+<script>
+
+    var serverAttendees = [];
+    var serverLabels = [];
+    var config = [];
+    {% set i = 0 %}
+    {% for server in servers %}
+
+        var attendees = [];
+        var labels = [];
+        {% for meeting in server.session_room %}
+            attendees.push({{ meeting.attendees.attendee|length }});
+            labels.push('{{ meeting.meetingName }}');
+        {% endfor %}
+
+    serverAttendees[{{ i }}] = attendees;
+    serverLabels[{{ i }}] = labels;
+
+    config[{{ i }}] = {
+        type: 'pie',
+        data: {
+            datasets: [{
+                data: attendees,
+                backgroundColor: [
+                    'aliceblue','antiquewhite','aqua','aquamarine','azure','beige','bisque','black','blanchedalmond',
+                    'blue','blueviolet','brown','burlywood','cadetblue','chartreuse','chocolate','coral','cornflowerblue',
+                    'cornsilk','crimson','cyan','darkblue','darkcyan','darkgoldenrod','darkgray','darkgreen','darkgrey',
+                    'darkkhaki','darkmagenta','darkolivegreen','darkorange','darkorchid','darkred','darksalmon','darkseagreen',
+                    'darkslateblue','darkslategray','darkslategrey','darkturquoise','darkviolet','deeppink','deepskyblue',
+                    'dimgray','dimgrey','dodgerblue','firebrick','floralwhite','forestgreen','fuchsia','gainsboro',
+                    'ghostwhite','gold','goldenrod','gray','green','greenyellow','grey','honeydew','hotpink',
+                    'indianred','indigo','ivory','khaki','lavender','lavenderblush','lawngreen','lemonchiffon',
+                    'lightblue','lightcoral','lightcyan','lightgoldenrodyellow','lightgray','lightgreen','lightgrey',
+                    'lightpink','lightsalmon','lightseagreen','lightskyblue','lightslategray','lightslategrey',
+                    'lightsteelblue','lightyellow','lime','limegreen','linen','magenta','maroon','mediumaquamarine',
+                    'mediumblue','mediumorchid','mediumpurple','mediumseagreen','mediumslateblue','mediumspringgreen',
+                    'mediumturquoise','mediumvioletred','midnightblue','mintcream','mistyrose','moccasin','navajowhite',
+                    'navy','oldlace','olive','olivedrab','orange','orangered','orchid','palegoldenrod','palegreen',
+                    'paleturquoise','palevioletred','papayawhip','peachpuff','peru','pink','plum','powderblue','purple',
+                    'rebeccapurple','red','rosybrown','royalblue','saddlebrown','salmon','sandybrown','seagreen','seashell','sienna',
+                    'silver','skyblue','slateblue','slategray','slategrey','snow','springgreen','steelblue','tan','teal','thistle',
+                    'tomato','turquoise','violet','wheat','white','whitesmoke','yellow','yellowgreen'
+                ],
+            }],
+            labels: labels,
+            borderWidth: 1 // Specify bar border width
+        },
+        options: {
+            responsive: true,
+            legend: {
+                display: true
+            },
+            tooltips: {
+                enabled: true,
+            }
+        }
+    };
+
+    {% set i = i + 1 %}
+    {% endfor %}
+
+    window.onload = function() {
+        {% set i = 0 %}
+        {% for server in servers %}
+
+            var ctx = document.getElementById('chart-area-{{ i }}').getContext('2d');
+            window.myPie{{ i }} = new Chart(ctx, config[{{ i }}]);
+
+        {% set i = i + 1 %}
+        {% endfor %}
+    };
+</script>
+<style>
+    #canvas-holder {
+        width: 100%;
+        margin-top: 50px;
+        text-align: center;
+    }
+    .chartjs-tooltip {
+        opacity: 1;
+        position: absolute;
+        background: rgba(0, 0, 0, .7);
+        color: white;
+        border-radius: 3px;
+        -webkit-transition: all .1s ease;
+        transition: all .1s ease;
+        pointer-events: none;
+        -webkit-transform: translate(-50%, 0);
+        transform: translate(-50%, 0);
+    }
+
+    .chartjs-tooltip-key {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 10px;
+    }
+</style>
+{% endif %}
+</body>
+</html>

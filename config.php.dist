@@ -1,0 +1,21 @@
+<?php
+
+/* GNU AFFERO GENERAL PUBLIC LICENSE Version 3 */
+
+return [
+	'company_name' => 'Here your company/organisation name',
+	'servers' => [
+		'servername' => [
+			'bbb_api_url' => 'https://fqdn.domain.tld/bigbluebutton/',
+			'bbb_api_password' => 'BBB shared secret',
+		],
+	],
+	'permissions' => [
+
+/* possible values: 'read', 'download', 'delete'
+Download only possible if you use https://github.com/tilmanmoser/bbb-video-download
+*/
+		'read', 'delete'
+	],
+	'path' => null
+];

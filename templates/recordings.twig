@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="free BigBlueButton dashboard for multiple servers">
+    <meta name="author" content="Francis Gonzales, Alexander Hu">
+
+    <title>BBB Dashboard</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="node_modules/chart.js/dist/Chart.min.css" rel="stylesheet">
+    <link href="node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.css" rel="stylesheet">
+    <script  type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script  type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script  type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script  type="text/javascript" src="node_modules/chart.js/dist/Chart.min.js"></script>
+    <script  type="text/javascript" src="node_modules/chart.js/dist/Chart.bundle.min.js"></script>
+    <script  type="text/javascript" src="node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+    <script  type="text/javascript" src="node_modules/sweetalert/dist/sweetalert.min.js"></script>
+
+    <meta name="theme-color" content="#563d7c">
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="node_modules/bootstrap/dist/css/pricing.css" rel="stylesheet">
+</head>
+<body>
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+    <h5 class="my-0 mr-md-auto font-weight-normal">{{ settings.company_name }}</h5>
+    <!--<nav class="my-2 my-md-0 mr-md-3">
+        <a class="p-2 text-dark" href="#">Features</a>
+        <a class="p-2 text-dark" href="#">Enterprise</a>
+        <a class="p-2 text-dark" href="#">Support</a>
+        <a class="p-2 text-dark" href="#">Pricing</a>
+    </nav>-->
+    <div class="col-md-2">
+      <form action="/recordings">
+        <select name="lang" class="form-control" id="select_language">
+            <option {{ session.lang == 'EN' ? 'selected' : '' }} value="EN">{{ 'English'|translate }} - EN</option>
+            <option {{ session.lang == 'GE' ? 'selected' : '' }} value="DE">{{ 'German'|translate }} - DE</option>
+            <option {{ session.lang == 'DA' ? 'selected' : '' }} value="DA">{{ 'Danish'|translate }} - DA</option>
+            <option {{ session.lang == 'ES' ? 'selected' : '' }} value="ES">{{ 'Spanish'|translate }} - ES</option>
+            <option {{ session.lang == 'FR' ? 'selected' : '' }} value="FR">{{ 'French'|translate }} - FR</option>
+            <option {{ session.lang == 'IT' ? 'selected' : '' }} value="IT">{{ 'Italian'|translate }} - IT</option>
+            <option {{ session.lang == 'NL' ? 'selected' : '' }} value="NL">{{ 'Dutch'|translate }} - NL</option>
+            <option {{ session.lang == 'PL' ? 'selected' : '' }} value="PL">{{ 'Polish'|translate }} - PL</option>
+            <option {{ session.lang == 'PT' ? 'selected' : '' }} value="PT">{{ 'Portuguese'|translate }} - PT</option>
+            <option {{ session.lang == 'SV' ? 'selected' : '' }} value="SV">{{ 'Swedish'|translate }} - SV</option>
+        </select>
+      </form>
+    </div>
+</div>
+<div class="container">
+    <div class="py-3 pt-md-5 pb-md-4 mx-auto text-center">
+        <h1 class="display-4">{{ 'Recordings'|translate }}</h1>
+        <br/>
+
+        <div class="col-md-8 mt-3 pl-0 mx-auto">
+            <form action="/recordings" method="get">
+                <div class="input-daterange input-group" id="datepicker">
+                    <h5 class="text-left mr-3 py-1">{{ 'Date Range'|translate }}:</h5>
+                    <input type="text" class="input-sm form-control input-daterange-start" name="filter_start_date">
+                    <span class="input-group-addon ml-3 mr-3 py-1">{{ 'to'|translate }}</span>
+                    <input type="text" class="input-sm form-control input-daterange-end" name="filter_end_date">
+
+                    <button type="submit" class="btn border ml-3 py-0">{{ 'Filter'|translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mx-auto text-center">
+        {% if (return_code == 200) %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% elseif (return_code == 500) %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endif %}
+    </div>
+
+    {% if total_recordings  > 0  %}
+
+        <div class="py-3 pt-md-5 pb-md-4 mx-auto text-center">
+            <div class="card text-center">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        {% set i = 0 %}
+                        {% for server in servers|keys %}
+                            <li class="nav-item">
+                                <a class="nav-link {{ current_tab == '' ? i == 0 ? 'active' : '' : server == current_tab ? 'active' : '' }}" id="nav-tab-{{ i }}" data-toggle="tab" href="#nav-{{ i }}" role="tab" aria-controls="nav-{{ i }}" aria-selected="true">
+                                    {{ server }}
+                                </a>
+                            </li>
+                            {% set i = i + 1 %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="nav-tabContent">
+                        {% set i = 0 %}
+                        {% for tab in servers|keys %}
+                            <div class="tab-pane fade {{ current_tab == '' ? i == 0 ? 'show active' : '' : tab == current_tab ? 'show active' : '' }}" id="nav-{{ i }}" role="tabpanel" aria-labelledby="nav-{{ i }}">
+
+                                <table class="table table-hover table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">ID </th>
+                                        <th scope="col" style="width: 40%;">
+                                            {{ 'Meeting ID'|translate }}
+                                            <br>
+                                            {{ 'Recording ID'|translate }}
+                                        </th>
+                                        <th scope="col">{{ 'Meeting Name'|translate }}</th>
+                                        <th scope="col">{{ 'Start Date'|translate }}</th>
+                                        <th scope="col">{{ 'Recording'|translate }} </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="content-filter_{{ i }}">
+
+                                    {% set id = 1 %}
+                                    {% for recordingData in recordings[tab].data %}
+
+                                    {% set startTime = recordingData.startTime/1000 %}
+                                        <tr>
+                                            <td>{{ id }}</td>
+                                            <td style="font-size: 0.7em;">
+                                                {{ recordingData.meetingID }}
+                                                <br>
+                                                {{ recordingData.recordID }}
+                                            </td>
+                                            <td>{{ recordingData.name }}</td>
+                                            <td>
+                                                {{ startTime|number_format(0, ',', '')|date('m/d/Y H:i:s') }}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    {% if 'read' in permission %}
+                                                    <a href="{{ recordingData.playback.format.url }}" class="btn btn-success" target="_blank">
+                                                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-camera-video-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                            <path fill-rule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2V5z"/>
+                                                        </svg>
+                                                    </a>
+                                                    {% endif %}
+                                                    {% if 'download' in permission %}
+                                                    <button class="btn btn-primary download_recording_btn" data-server="{{ tab }}" id="{{ recordingData.recordID }}" data-rname="{{ recordingData.name }}">
+                                                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-download" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                            <path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                                            <path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                                        </svg>
+                                                    </button>
+                                                    {% endif %}
+                                                    {% if 'delete' in permission %}
+                                                    <button class="btn btn-danger delete_recording_btn" data-server="{{ tab }}" id="{{ recordingData.recordID }}" data-rname="{{ recordingData.name }}">
+                                                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-trash" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"></path>
+                                                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"></path>
+                                                        </svg>
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                    {% set id = id + 1 %}
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+
+
+                            </div>
+                            {% set i = i + 1 %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+            <h1 class="display-4">{{ 'There is not any recording'|translate }}</h1>
+        </div>
+    {% endif %}
+    <footer class="pt-4 my-md-5 pt-md-5 border-top">
+        <div class="row">
+            <div class="col-12 col-md-3">
+                <img class="mb-2" src="../brand/osc.png" alt="" width="200" >
+                <small class="d-block mb-3 text-muted">&copy; {{ "now"|date('Y') }}</small>
+            </div>
+            <div class="col-6 col-md">
+                <h5>{{ 'Additional Tools'|translate }}</h5>
+                <ul class="list-unstyled text-small">
+                    <li><a class="text-muted" href="/">{{ 'Statistics'|translate }}</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    $('#select_language').on('change', function () {
+        let form = $(this).parent();
+        form.submit();
+    });
+    {% if filter['filter_start_date'] is not empty  and filter['filter_end_date'] is not empty %}
+    $('.input-daterange-start').datepicker('setDate', "{{ filter['filter_start_date']|date('m/d/Y') }}");
+    $('.input-daterange-end').datepicker('setDate', "{{ filter['filter_end_date']|date('m/d/Y') }}");
+    {% endif %}
+
+    $(document).ready(() => {
+
+       $(".delete_recording_btn").click(function(e){
+           swal("Do you really want to delete the recording \"" + $(this).data('rname') + "\"?", {
+               dangerMode: true,
+               buttons: true,
+           }).then((ok) => {
+               if (ok) {
+                   location.href = '/delete/recording?' + $.param({
+                       server : $(this).attr('data-server'), recordingId : $(this).attr('id')
+                   });
+               }
+           });
+        });
+
+        $(".download_recording_btn").click(function(e){
+            window.open(
+                '/download/recording?' + $.param({
+                    server : $(this).attr('data-server'), recordingId : $(this).attr('id')
+                }),
+                '_blank'
+            );
+        });
+
+    })
+
+</script>
+
+</body>
+</html>
